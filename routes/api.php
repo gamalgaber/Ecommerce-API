@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -40,4 +41,14 @@ Route::group(['prefix' => 'brands'], function () {
     Route::post('/', [BrandController::class, 'store']);
     Route::match(['put', 'patch'], '/{id}', [BrandController::class, 'update']);
     Route::delete('/{id}', [BrandController::class, 'delete']);
+});
+
+
+// Category CRUD
+Route::group(['prefix' => 'categories'], function () {
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::get('/{id}', [CategoryController::class, 'show']);
+    Route::post('/', [CategoryController::class, 'store']);
+    Route::match(['put', 'patch'], '/{id}', [CategoryController::class, 'update']);
+    Route::delete('/{id}', [CategoryController::class, 'delete']);
 });

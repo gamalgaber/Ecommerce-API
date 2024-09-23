@@ -119,8 +119,8 @@ class BrandController extends Controller
 
         $rules = [
             'name' => $method === 'PATCH'
-                ? 'sometimes|string|min:3|max:50|unique:brands,name,' . $id
-                : 'required|string|min:3|max:50|unique:brands,name,' . $id,
+                ? 'sometimes|string|min:3|max:50|unique:brands,name,{$id}'
+                : 'required|string|min:3|max:50|unique:brands,name,{$id}',
         ];
 
         $messages = [
