@@ -7,7 +7,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 trait Response
 {
-    public function sendResponse(string $message = '', bool $status = true, array $data = []): JsonResponse
+    public function sendResponse(string $message = '', bool $status = true, array|object $data = [], int $statusCode = 200): JsonResponse
     {
         // Convert data array to object if it's an array
         $responseData = empty($data) ? (object)[] : (object)$data;
@@ -16,10 +16,10 @@ trait Response
             'status' => $status,
             'message' => $message,
             'data' => $responseData
-        ]);
+        ], $statusCode);
     }
 
-    protected function respondWithToken(string $token, bool $status = true, string $message = '', array $data = []): JsonResponse
+    protected function respondWithToken(string $token, bool $status = true, string $message = '', array|object $data = []): JsonResponse
     {
         // Convert data array to object if it's an array
         $responseData = empty($data) ? (object)[] : (object)$data;

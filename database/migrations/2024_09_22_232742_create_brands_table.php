@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('brands', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 30);
-            
+            $table->uuid('id')->primary();
+            $table->string('name', length: 40)->unique();
+
             $table->timestamps();
         });
     }
