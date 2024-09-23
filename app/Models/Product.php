@@ -4,19 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Category extends Model
+class Product extends Model
 {
     use HasFactory;
-
-    public $table = 'categories';
+    public $table = 'products';
     public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
+        'category_id',
+        'brand_id',
         'name',
-        'image'
+        'price',
+        'discount',
+        'amount',
+        'is_available',
+        'image',
     ];
     protected $hidden = [
         'created_at',
@@ -32,9 +36,13 @@ class Category extends Model
         });
     }
 
-
-    public function products(): HasMany
+    public function category(): BelongsTo
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(Category::class, 'category_id', 'id');
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id', 'id');
     }
 }

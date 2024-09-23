@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +27,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group([
     'middleware' => 'api',
     'prefix' => 'auth'
-], function () {
+], function (): void {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
     Route::post('logout', [AuthController::class, 'logout']);
@@ -34,8 +35,9 @@ Route::group([
     Route::post('me', [AuthController::class, 'me']);
 });
 
+
 // Brand CRUD
-Route::group(['prefix' => 'brands'], function () {
+Route::group(['prefix' => 'brands'], function (): void {
     Route::get('/', [BrandController::class, 'index']);
     Route::get('/{id}', [BrandController::class, 'show']);
     Route::post('/', [BrandController::class, 'store']);
@@ -45,10 +47,19 @@ Route::group(['prefix' => 'brands'], function () {
 
 
 // Category CRUD
-Route::group(['prefix' => 'categories'], function () {
+Route::group(['prefix' => 'categories'], function (): void {
     Route::get('/', [CategoryController::class, 'index']);
     Route::get('/{id}', [CategoryController::class, 'show']);
     Route::post('/', [CategoryController::class, 'store']);
     Route::match(['put', 'patch'], '/{id}', [CategoryController::class, 'update']);
     Route::delete('/{id}', [CategoryController::class, 'delete']);
 });
+
+
+// Location
+Route::group(['prefix' => 'locations'], function (): void {
+    Route::post('/', [LocationController::class, 'store']);
+    Route::match(['get', 'post'], '/{id}', [LocationController::class, 'update']);
+    Route::delete('/{id}', [LocationController::class, 'delete']);
+});
+

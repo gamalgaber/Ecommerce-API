@@ -4,19 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Category extends Model
+class Location extends Model
 {
     use HasFactory;
 
-    public $table = 'categories';
+    public $table = 'locations';
     public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
-        'name',
-        'image'
+        'user_id',
+        'area',
+        'street',
+        'building'
     ];
     protected $hidden = [
         'created_at',
@@ -32,9 +33,8 @@ class Category extends Model
         });
     }
 
-
-    public function products(): HasMany
+    public function user(): BelongsTo
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }
