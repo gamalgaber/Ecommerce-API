@@ -5,13 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     public $table = 'products';
+    protected $primaryKey = 'id';
     public $incrementing = false;
+    public $timestamps = true;
     protected $keyType = 'string';
+    protected $dates = ['deleted_at', 'created_at', 'updated_at'];
+    protected $casts = [
+        'is_available' => 'boolean',
+    ];
     protected $fillable = [
         'category_id',
         'brand_id',
@@ -24,7 +31,8 @@ class Product extends Model
     ];
     protected $hidden = [
         'created_at',
-        'updated_at'
+        'updated_at',
+        'deleted_at'
     ];
 
     protected static function boot(): void

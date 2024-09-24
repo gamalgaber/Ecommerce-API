@@ -53,12 +53,15 @@ class LocationController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+
             $location = new Location();
             $location->user_id = auth()->user()->id;
             $location->area = $request->area;
             $location->street = $request->street;
             $location->building = $request->building;
             $location->save();
+
 
             $returnedLocation = [
                 'id' => $location->id,
@@ -68,11 +71,13 @@ class LocationController extends Controller
                 'area' => $location->area,
             ];
 
+            DB::commit();
             return $this->sendResponse('Location created successfully!', true, $returnedLocation, 201);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while login. Please try again later.',
+                'message' => 'An error occurred while creating location. Please try again later.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -122,8 +127,10 @@ class LocationController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $location = Location::find($id);
             if (!$location) {
+                DB::rollBack();
                 return $this->sendResponse("No location found with the provided ID", false, [], 404);
             }
 
@@ -137,8 +144,12 @@ class LocationController extends Controller
 
             $location->save();
 
+            DB::commit();
+
             return $this->sendResponse('Location updated successfully!', true,  $location, 201);
         } catch (Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while login. Please try again later.',
@@ -149,11 +160,12 @@ class LocationController extends Controller
 
     public function delete(string|int $id): JsonResponse
     {
-        DB::beginTransaction();
 
         try {
+            DB::beginTransaction();
             $location = Location::find($id);
             if (!$location) {
+                DB::rollBack();
                 return $this->sendResponse("No location found with the provided ID", false, [], 404);
             }
             $location->delete();

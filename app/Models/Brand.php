@@ -5,21 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Str;
 
 class Brand extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     public $table = 'brands';
     public $incrementing = false;
+    protected $dates = ['deleted_at', 'created_at', 'updated_at'];
     protected $keyType = 'string';
     protected $fillable = [
         'name'
     ];
     protected $hidden = [
         'created_at',
-        'updated_at'
+        'updated_at',
+        'deleted_at'
     ];
 
     protected static function boot(): void
@@ -31,7 +34,7 @@ class Brand extends Model
         });
     }
 
-    public function products():HasMany
+    public function products(): HasMany
     {
         return $this->hasMany(Product::class);
     }

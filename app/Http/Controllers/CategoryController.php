@@ -8,44 +8,41 @@ use App\Traits\Response;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
     use Image, Response;
-    // TODO: solve paginate
+
     public function index(Request $request): JsonResponse
     {
         try {
             $columns = ['id', 'name', 'image'];
 
-            $paginate = (int) $request->query('paginate', 10);
-            $page = (int) $request->query('page', 1);
+            $paginate = (int) $request->input('paginate', 10);
+            $page = (int) $request->input('page', 1);
 
-            $query = Category::select($columns);
+            $cacheKey = 'categories_page_' . $page . '_paginate_' . $paginate;
 
-            $categories = $paginate > 0 ?
-                $query->paginate($paginate, ['*'], 'page', $page) :
-                $query->get();
+            $categories = Cache::remember($cacheKey, now()->addHour(), function () use ($columns, $paginate, $page) {
+                $query = Category::select($columns);
+
+                return $paginate  ?
+                    $query->paginate($paginate, ['*'], 'page', $page) :
+                    $query->get();
+            });
 
             if ($categories->isEmpty()) {
                 return $this->sendResponse('No categories available', false, [], 404);
             }
 
-            $returnedCategories = $categories->map(function ($category): array {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'image' => $category->image,
-                ];
-            });
-
-            return $this->sendResponse("Categories successfully fetched", true, $returnedCategories, 200);
+            return $this->sendResponse("Categories successfully fetched", true, $categories, 200);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while login. Please try again later.',
+                'message' => 'An error occurred while fetching categories. Please try again later.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -54,7 +51,12 @@ class CategoryController extends Controller
     public function show(string|int $id): JsonResponse
     {
         try {
-            $category = Category::find($id);
+            $cacheKey = 'category_' . $id;
+
+            $category = Cache::remember($cacheKey, now()->addHours(2), function () use ($id) {
+                return  Category::find($id);
+            });
+
             if (!$category) {
                 return $this->sendResponse("No category found with the provided ID", false, [], 404);
             }
@@ -63,7 +65,7 @@ class CategoryController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while login. Please try again later.',
+                'message' => 'An error occurred while fetching category. Please try again later.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -99,26 +101,27 @@ class CategoryController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $category = new Category();
 
             if ($request->hasFile('image')) {
                 $imagePath = $this->uploadImage($request->file('image'), 'assets/uploads/categories');
                 $category->image = $imagePath;
             } else {
+                DB::rollBack();
                 return $this->sendResponse("Please provide an image file", false, [], 304);
             }
 
             $category->name = $request->name;
             $category->save();
 
-            $returnedCategory = [
-                'id' => $category->id,
-                'name' => $category->name,
-                'image' => $category->image,
-            ];
+            Cache::forget('categories_page_1_paginate_10');
 
-            return $this->sendResponse('Category created successfully!', true, $returnedCategory, 201);
+            DB::commit();
+            return $this->sendResponse('Category created successfully!', true, $category, 201);
         } catch (Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while login. Please try again later.',
@@ -127,7 +130,6 @@ class CategoryController extends Controller
         }
     }
 
-    // TODO: unique dose not work
     public function update(Request $request, string|int $id): JsonResponse
     {
         $method = $request->method();
@@ -165,8 +167,10 @@ class CategoryController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $category = Category::find($id);
             if (!$category) {
+                DB::rollBack();
                 return $this->sendResponse("No category found with the provided ID", false, [], 404);
             }
 
@@ -189,8 +193,14 @@ class CategoryController extends Controller
 
             $category->save();
 
+            Cache::forget('category_' . $id);
+
+            DB::commit();
+
             return $this->sendResponse('Category updated successfully!', true,  $category, 201);
         } catch (Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while login. Please try again later.',
@@ -201,20 +211,29 @@ class CategoryController extends Controller
 
     public function delete(string|int $id): JsonResponse
     {
-        DB::beginTransaction();
 
         try {
+
+            DB::beginTransaction();
+
             $category = Category::find($id);
             if (!$category) {
+                DB::rollBack();
                 return $this->sendResponse("No category found with the provided ID", false, [], 404);
             }
 
             $this->deleteImage($category->image);
             $category->delete();
+
+            Cache::forget('category_' . $id);
+
             DB::commit();
+
             return $this->sendResponse('Category deleted successfully!', true, [], 200);
         } catch (Exception $e) {
+
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while login. Please try again later.',
