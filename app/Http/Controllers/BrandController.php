@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 
 class BrandController extends Controller
@@ -25,7 +26,7 @@ class BrandController extends Controller
             $paginate = (int) $request->input('paginate', 10);
             $page = (int) $request->input('page', 1);
 
-            $cacheKey = 'brands_page_' . $page . '_paginate_' . $paginate;
+            $cacheKey = 'brands_page_{$page}_paginate_{$paginate}';
 
             $brands = Cache::remember($cacheKey, now()->addHour(), function () use ($columns, $paginate, $page) {
                 $query = Brand::select($columns);
@@ -38,6 +39,7 @@ class BrandController extends Controller
             if ($brands->isEmpty()) {
                 return $this->sendResponse('No brands available', false, [], 404);
             }
+
             return $this->sendResponse("Brands successfully fetched", true, $brands, 200);
         } catch (Exception $e) {
             return response()->json([
@@ -53,9 +55,14 @@ class BrandController extends Controller
         try {
             $cacheKey = 'brand_' . $id;
 
-            $brand = Cache::remember($cacheKey, now()->addHours(2), function () use ($id) {
-                return Brand::find($id);
-            });
+            $brand = Cache::get($cacheKey);
+
+            if (!$brand) {
+                $brand = Brand::find($id);
+                if ($brand) {
+                    Cache::put($cacheKey, $brand, now()->addHour());
+                }
+            }
 
             if (!$brand) {
                 return $this->sendResponse("No brand found with the provided ID", false, [], 404);
@@ -97,11 +104,12 @@ class BrandController extends Controller
 
         try {
             DB::beginTransaction();
+
             $brand = new Brand();
             $brand->name = $request->name;
             $brand->save();
 
-            Cache::forget('brands_page_1_paginate_10');
+            Cache::forget('brands_page_1_paginate_10');  //TODO: current page
 
             DB::commit();
             return $this->sendResponse('Brand created successfully!', true, $brand, 201);
@@ -197,4 +205,47 @@ class BrandController extends Controller
             ], 500);
         }
     }
+
+
+    // public function index_example(Request $request): JsonResponse
+    // {
+    //     try {
+    //         // $columns = ['id', 'name'];
+
+    //         // $paginate = (int) $request->input('paginate', 10);
+    //         // $page = (int) $request->input('page', 1);
+
+    //         $cachedBrand = Redis::get('brands_');
+
+    //         if (isset($cachedBrand)) {
+    //             $brands = json_decode($cachedBrand, false);
+    //             return $this->sendResponse("Brands Fetched from redis", true, $brands, 200);
+    //         } else {
+    //             $brand = Brand::get();
+    //             Redis::set('brands_', $brand);
+
+    //             return $this->sendResponse("Brands Fetched from database", true, $brand, 200);
+    //         }
+
+    //         // $cacheKey = 'brands_page_' . $page . '_paginate_' . $paginate;
+    //         // $brands = Cache::remember($cacheKey, now()->addHour(), function () use ($columns, $paginate, $page) {
+    //         //     $query = Brand::select($columns);
+
+    //         //     return $paginate ?
+    //         //         $query->paginate($paginate, ['*'], 'page', $page) :
+    //         //         $query->get();
+    //         // });
+
+    //         // if ($brands->isEmpty()) {
+    //         //     return $this->sendResponse('No brands available', false, [], 404);
+    //         // }
+    //         // return $this->sendResponse("Brands successfully fetched", true, $brands, 200);
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'An error occurred while fetching brands. Please try again later.',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 }

@@ -65,3 +65,13 @@ Route::group(['prefix' => 'v1'], function (): void {
         Route::delete('/{id}', [LocationController::class, 'delete']);
     });
 });
+
+
+/**
+ * to make third party api request:
+ *
+ *
+ * $response = \Facade\HTTP::get('url');
+ *                        any-method
+ * return $response;
+ */
