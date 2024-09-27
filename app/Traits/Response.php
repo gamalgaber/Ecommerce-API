@@ -33,4 +33,13 @@ trait Response
             'data' => $responseData
         ]);
     }
+
+    public function errorResponse(string $message = "", string $errorMessage = ""): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'error' => $errorMessage
+        ], 500);
+    }
 }

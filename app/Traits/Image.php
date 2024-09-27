@@ -24,8 +24,9 @@ trait Image
         $image->storeAs($path, $imageName, 'public');
         $image->move(public_path($path), $imageName);
 
+        $domain = env('APP_URL', 'http://localhost');
         // Create the standardized URL
-        return env('APP_URL') . '/' . $fullPath;
+        return $domain . '/' . $fullPath;
     }
 
     public function deleteImage(string $path): void
